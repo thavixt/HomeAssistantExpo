@@ -39,8 +39,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build:dev": "eas build --platform android --profile development",
-    "build:prod": "echo \"TODO\""
+    "deploy": "bash ./deploy.sh"
   },
   "private": true
 }
