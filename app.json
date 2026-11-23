@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#000000",
     "android": {
+      "package": "com.thavixt.homeassistant",
       "adaptiveIcon": {
         "backgroundColor": "#18BCF2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
