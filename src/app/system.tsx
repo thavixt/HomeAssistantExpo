@@ -1,5 +1,10 @@
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { Screen } from '@/components/screen';
+import { System } from '@/components/widgets/system';
 
 export default function SystemScreen() {
-  return <SectionPlaceholder section="system" />;
+  return (
+    <Screen>
+      <System />
+    </Screen>
+  );
 }

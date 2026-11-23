@@ -11,10 +11,10 @@ import { Script } from '@/components/ha/script';
 import { IconButton } from '@/components/icon-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ENTITIES, objectId } from '@/constants/entities';
 import { Spacing } from '@/constants/theme';
 import { useAction } from '@/hooks/use-action';
 import { useTheme } from '@/hooks/use-theme';
-import { ENTITIES, objectId } from '@/lib/entities';
 
 const TITLE = 'Vidaa TV';
 const ICON: EntityIcon = { ios: 'tv', android: 'tv', web: 'tv' };

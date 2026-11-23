@@ -11,7 +11,11 @@ export function Screen({ children }: { children: ReactNode }) {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingTop: headerHeight + Spacing.four }]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: headerHeight + Spacing.four }]}
+        // a tap on a button while the keyboard is up (e.g. Assist's send) acts right away, instead of only closing the keyboard
+        keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
     </ThemedView>

@@ -30,13 +30,13 @@ export default function AppTabs() {
         <TabList asChild>
           <CustomTabList onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
             <TabTrigger name="index" href="/" asChild>
-              <TabButton>Lights</TabButton>
+              <TabButton>{SECTIONS.lights.title}</TabButton>
             </TabTrigger>
             <TabTrigger name="climate" href="/climate" asChild>
-              <TabButton>Climate</TabButton>
+              <TabButton>{SECTIONS.climate.title}</TabButton>
             </TabTrigger>
             <TabTrigger name="tv" href="/tv" asChild>
-              <TabButton>TV</TabButton>
+              <TabButton>{SECTIONS.tv.title}</TabButton>
             </TabTrigger>
             <TabTrigger name="automations" href="/automations" asChild>
               <TabButton>{SECTIONS.automations.title}</TabButton>
@@ -49,6 +49,9 @@ export default function AppTabs() {
             </TabTrigger>
             <TabTrigger name="security" href="/security" asChild>
               <TabButton>{SECTIONS.security.title}</TabButton>
+            </TabTrigger>
+            <TabTrigger name="assist" href="/assist" asChild>
+              <TabButton>{SECTIONS.assist.title}</TabButton>
             </TabTrigger>
           </CustomTabList>
         </TabList>

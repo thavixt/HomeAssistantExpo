@@ -14,6 +14,10 @@ export const Colors = {
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
     textSecondary: '#60646C',
+    /* status colors - darker shades in light mode, so they keep contrast on the light cards */
+    success: '#16A34A',
+    warning: '#D97706',
+    danger: '#DC2626',
   },
   dark: {
     text: '#ffffff',
@@ -21,6 +25,9 @@ export const Colors = {
     backgroundElement: '#212225',
     backgroundSelected: '#2E3135',
     textSecondary: '#B0B4BA',
+    success: '#4ADE80',
+    warning: '#FBBF24',
+    danger: '#F87171',
   },
 } as const;
 

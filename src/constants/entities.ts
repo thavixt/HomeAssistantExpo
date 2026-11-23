@@ -23,6 +23,44 @@ export const ENTITIES = {
     mediaPlayer: 'media_player.living_room_vidaa_smart_tv',
     remote: 'remote.living_room_vidaa_smart_tv_remote',
   },
+  /* mobile app sensors */
+  phone: {
+    /* the name of the Wi-Fi network the phone is on */
+    wifi: 'sensor.sm_a566b_wi_fi_connection',
+    batteryLevel: 'sensor.sm_a566b_battery_level',
+    batteryState: 'sensor.sm_a566b_battery_state',
+    tracker: 'device_tracker.sm_a566b',
+  },
+  dashboardTablet: {
+    batteryLevel: 'sensor.lenovo_tb_x606x_tablet_battery_level',
+    batteryState: 'sensor.lenovo_tb_x606x_tablet_battery_state',
+    tracker: 'device_tracker.lenovo_tb_x606x_tablet',
+  },
+  dashboardPhone: {
+    batteryLevel: 'sensor.sm_a236b_mobile_battery_level',
+    batteryState: 'sensor.sm_a236b_mobile_battery_state',
+    tracker: 'device_tracker.sm_a236b_mobile',
+  },
+  /* HASS.Agent and Tailscale sensors */
+  laptop: {
+    batteryLevel: 'sensor.msibravo_msibravo_battery_charge_remaining_percentage',
+    powerlineStatus: 'sensor.msibravo_msibravo_battery_powerline_status',
+    lastSeen: 'sensor.msibravo_utoljara_latva',
+  },
+  security: {
+    /* shown in the Security card, in this order */
+    camera: {
+      /* MJPEG camera, streaming from the motionEye add-on */
+      livingRoom: 'camera.camera_1',
+    },
+  },
+  /* the Raspberry Pi running HA */
+  system: {
+    cpuTemperature: 'sensor.system_monitor_processzor_homerseklet',
+    cpuUsage: 'sensor.system_monitor_processzor_hasznalat',
+    memoryUsage: 'sensor.system_monitor_memoriahasznalat',
+    uptime: 'sensor.system_monitor_uzemido',
+  },
   automations: {
     homeEnter: 'automation.home_enter',
     homeLeaving: 'automation.home_leaving',
@@ -38,6 +76,12 @@ export const ENTITIES = {
   },
   scripts: {
     lofiStream: 'script.lofi',
+    /* says a message out loud on the phone, at full volume */
+    phoneSpeak: 'script.phone_speak',
+    /* the same, on the dashboard tablet */
+    dashboardTabletSpeak: 'script.dashboard_tablet_speak',
+    /* turns the TV on if needed, then says the message - takes a `language` too */
+    sayOnTv: 'script.say_on_tv',
     fireplaceStream: 'script.fireplace',
     playYoutubeVideo: 'script.play_youtube_video',
     dashboardBrowser: 'script.dashboard_browser',

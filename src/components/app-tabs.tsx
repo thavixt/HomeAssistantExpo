@@ -24,18 +24,18 @@ export default function AppTabs() {
           indicatorColor={colors.backgroundElement}
           labelStyle={{ selected: { color: colors.text } }}>
           <NativeTabs.Trigger name="index">
-            <NativeTabs.Trigger.Label>Lights</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf="lightbulb" md="lightbulb" />
+            <NativeTabs.Trigger.Label>{SECTIONS.lights.title}</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf={SECTIONS.lights.icon.ios} md={SECTIONS.lights.icon.android} />
           </NativeTabs.Trigger>
 
           <NativeTabs.Trigger name="climate">
-            <NativeTabs.Trigger.Label>Climate</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf="air.conditioner.horizontal" md="ac_unit" />
+            <NativeTabs.Trigger.Label>{SECTIONS.climate.title}</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf={SECTIONS.climate.icon.ios} md={SECTIONS.climate.icon.android} />
           </NativeTabs.Trigger>
 
           <NativeTabs.Trigger name="tv">
-            <NativeTabs.Trigger.Label>TV</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf="tv" md="tv" />
+            <NativeTabs.Trigger.Label>{SECTIONS.tv.title}</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger.Icon sf={SECTIONS.tv.icon.ios} md={SECTIONS.tv.icon.android} />
           </NativeTabs.Trigger>
 
           <NativeTabs.Trigger name="automations">

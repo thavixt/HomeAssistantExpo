@@ -1,5 +1,10 @@
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { Screen } from '@/components/screen';
+import { Security } from '@/components/widgets/security';
 
 export default function SecurityScreen() {
-  return <SectionPlaceholder section="security" />;
+  return (
+    <Screen>
+      <Security />
+    </Screen>
+  );
 }

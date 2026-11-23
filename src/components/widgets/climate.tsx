@@ -1,16 +1,16 @@
+import { useClimate, type ClimateAttributes } from 'hass-react';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useClimate, type ClimateAttributes } from 'hass-react';
 
 import { Card, CardPlaceholder } from '@/components/card';
 import { ChipGroup } from '@/components/chip-group';
 import type { EntityIcon } from '@/components/ha/entity-button';
 import { IconButton } from '@/components/icon-button';
 import { ThemedText } from '@/components/themed-text';
+import { ENTITIES } from '@/constants/entities';
 import { Spacing } from '@/constants/theme';
 import { useAction } from '@/hooks/use-action';
 import { useTemperatureUnit } from '@/hooks/use-temperature-unit';
-import { ENTITIES } from '@/lib/entities';
 
 const TITLE = 'Gree AC';
 const ICON: EntityIcon = { ios: 'air.conditioner.horizontal', android: 'ac_unit', web: 'ac_unit' };

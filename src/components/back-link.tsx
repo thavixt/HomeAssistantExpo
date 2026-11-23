@@ -2,30 +2,12 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
-import { Card } from '@/components/card';
-import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { SECTIONS, type SectionId } from '@/lib/sections';
 
-/** a whole tab for a section that isn't built yet. `back` adds a back link, for screens pushed from "More" */
-export function SectionPlaceholder({ section, back }: { section: SectionId; back?: string }) {
-  const { title, icon } = SECTIONS[section];
-
-  return (
-    <Screen>
-      {back && <BackLink label={back} />}
-      <Card icon={icon} title={title}>
-        <ThemedText type="small" themeColor="textSecondary">
-          Coming soon - this section isn&apos;t ported from the PWA yet.
-        </ThemedText>
-      </Card>
-    </Screen>
-  );
-}
-
-function BackLink({ label }: { label: string }) {
+/** "‹ More" - for screens pushed onto a stack, since the app's own header has no back button */
+export function BackLink({ label }: { label: string }) {
   const theme = useTheme();
 
   return (

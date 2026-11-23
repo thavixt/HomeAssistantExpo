@@ -1,5 +1,10 @@
-import { SectionPlaceholder } from '@/components/section-placeholder';
+import { Screen } from '@/components/screen';
+import { Devices } from '@/components/widgets/devices';
 
 export default function DevicesScreen() {
-  return <SectionPlaceholder section="devices" />;
+  return (
+    <Screen>
+      <Devices />
+    </Screen>
+  );
 }

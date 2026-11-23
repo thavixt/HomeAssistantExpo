@@ -7,3 +7,17 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* what shows through while a lazily loaded route renders - matches Colors.*.background,
+   so navigating doesn't flash white in dark mode (before JS runs too, unlike SystemUI) */
+html,
+body {
+  background-color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background-color: #000000;
+  }
+}

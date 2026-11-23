@@ -3,7 +3,7 @@ import { Cell, Grid } from '@/components/grid';
 import { Light } from '@/components/ha/light';
 import { Scene } from '@/components/ha/scene';
 import { Switch } from '@/components/ha/switch';
-import { ENTITIES } from '@/lib/entities';
+import { ENTITIES } from '@/constants/entities';
 
 export function Lights() {
   return (

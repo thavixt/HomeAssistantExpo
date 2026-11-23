@@ -1,8 +1,8 @@
 import { Card } from '@/components/card';
 import { Cell, Grid } from '@/components/grid';
 import { Automation } from '@/components/ha/automation';
+import { ENTITIES } from '@/constants/entities';
 import { useNow } from '@/hooks/use-now';
-import { ENTITIES } from '@/lib/entities';
 import { SECTIONS } from '@/lib/sections';
 
 /* the same automations, in the same order, as the pwa */

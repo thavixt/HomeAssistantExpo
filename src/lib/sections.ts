@@ -6,8 +6,19 @@ interface Section {
   icon: EntityIcon & { ios: string; android: string };
 }
 
-/* the pwa's sections that aren't ported yet - they only show a placeholder for now */
 export const SECTIONS = {
+  lights: {
+    title: 'Lights',
+    icon: { ios: 'lightbulb', android: 'lightbulb', web: 'lightbulb' },
+  },
+  climate: {
+    title: 'Climate',
+    icon: { ios: 'air.conditioner.horizontal', android: 'ac_unit', web: 'ac_unit' },
+  },
+  tv: {
+    title: 'TV',
+    icon: { ios: 'tv', android: 'tv', web: 'tv' },
+  },
   automations: {
     title: 'Automations',
     icon: { ios: 'gearshape.2', android: 'auto_mode', web: 'auto_mode' },
@@ -24,9 +35,13 @@ export const SECTIONS = {
     title: 'Security',
     icon: { ios: 'lock.shield', android: 'security', web: 'security' },
   },
+  assist: {
+    title: 'Assist',
+    icon: { ios: 'text.bubble', android: 'chat', web: 'chat' },
+  },
 } satisfies Record<string, Section>;
 
 export type SectionId = keyof typeof SECTIONS;
 
 /* android's native tab bar fits at most 5 tabs, so these live behind the "More" tab there */
-export const MORE_SECTIONS = ['devices', 'system', 'security'] as const satisfies SectionId[];
+export const MORE_SECTIONS = ['devices', 'system', 'security', 'assist'] as const satisfies SectionId[];
