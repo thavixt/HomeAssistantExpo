@@ -1,19 +1,26 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useHeaderHeight } from '@/hooks/use-header-height';
 
 /** scrolling tab content, pushed below the shared header in AppTabs */
 export function Screen({ children }: { children: ReactNode }) {
   const headerHeight = useHeaderHeight();
+  // clear of the home indicator / android's navigation bar - 0 on web
+  const insets = useSafeAreaInsets();
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: headerHeight + Spacing.four }]}
+        contentContainerStyle={[
+          styles.content,
+          // the header's own bottom padding makes up the rest of the gap
+          { paddingTop: headerHeight + Spacing.three, paddingBottom: insets.bottom + Spacing.four },
+        ]}
         // a tap on a button while the keyboard is up (e.g. Assist's send) acts right away, instead of only closing the keyboard
         keyboardShouldPersistTaps="handled">
         {children}
@@ -27,7 +34,6 @@ const styles = StyleSheet.create({
   scroll: { width: '100%', maxWidth: MaxContentWidth },
   content: {
     paddingHorizontal: Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.four,
   },
 });

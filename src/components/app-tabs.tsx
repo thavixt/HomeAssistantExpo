@@ -1,80 +1,155 @@
-import { NativeTabs } from 'expo-router/native-tabs';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { Href } from 'expo-router';
+import {
+  TabList,
+  TabListProps,
+  Tabs,
+  TabSlot,
+  TabTrigger,
+  TabTriggerSlotProps,
+} from 'expo-router/ui';
+import { useState, type ComponentRef, type Ref } from 'react';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ConnectionStatus } from '@/components/connection-status';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { ThemedView } from '@/components/themed-view';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { HeaderHeightContext } from '@/hooks/use-header-height';
 import { useTheme } from '@/hooks/use-theme';
-import { SECTIONS } from '@/lib/sections';
+import { SECTIONS, type SectionId } from '@/lib/sections';
 
+/* a first guess until onLayout reports the real height */
+const INITIAL_HEADER_HEIGHT = 88;
+
+/* every tab's route - `name` is the file in src/app */
+const TABS: { name: string; href: Href; section: SectionId }[] = [
+  { name: 'index', href: '/', section: 'lights' },
+  { name: 'climate', href: '/climate', section: 'climate' },
+  { name: 'tv', href: '/tv', section: 'tv' },
+  { name: 'automations', href: '/automations', section: 'automations' },
+  { name: 'devices', href: '/devices', section: 'devices' },
+  { name: 'system', href: '/system', section: 'system' },
+  { name: 'security', href: '/security', section: 'security' },
+  { name: 'assist', href: '/assist', section: 'assist' },
+];
+
+/* alphabetically by title - the order only affects the buttons, Lights stays the home tab
+   (it's "/" and the layout's anchor, see src/app/_layout.tsx) */
+const SORTED_TABS = [...TABS].sort((a, b) => SECTIONS[a.section].title.localeCompare(SECTIONS[b.section].title));
+
+/**
+ * every tab, in the header, on every platform - a native bottom tab bar fits only 5 on android.
+ * the header is drawn over the tab content, which pads itself by the header's height (see Screen)
+ */
 export default function AppTabs() {
-  const colors = useTheme();
-  const insets = useSafeAreaInsets();
-  // a first guess until onLayout reports the real height
-  const [headerHeight, setHeaderHeight] = useState(insets.top + 64);
+  const [headerHeight, setHeaderHeight] = useState(INITIAL_HEADER_HEIGHT);
 
   return (
     <HeaderHeightContext value={headerHeight}>
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <NativeTabs
-          backgroundColor={colors.background}
-          indicatorColor={colors.backgroundElement}
-          labelStyle={{ selected: { color: colors.text } }}>
-          <NativeTabs.Trigger name="index">
-            <NativeTabs.Trigger.Label>{SECTIONS.lights.title}</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf={SECTIONS.lights.icon.ios} md={SECTIONS.lights.icon.android} />
-          </NativeTabs.Trigger>
-
-          <NativeTabs.Trigger name="climate">
-            <NativeTabs.Trigger.Label>{SECTIONS.climate.title}</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf={SECTIONS.climate.icon.ios} md={SECTIONS.climate.icon.android} />
-          </NativeTabs.Trigger>
-
-          <NativeTabs.Trigger name="tv">
-            <NativeTabs.Trigger.Label>{SECTIONS.tv.title}</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf={SECTIONS.tv.icon.ios} md={SECTIONS.tv.icon.android} />
-          </NativeTabs.Trigger>
-
-          <NativeTabs.Trigger name="automations">
-            <NativeTabs.Trigger.Label>{SECTIONS.automations.title}</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf={SECTIONS.automations.icon.ios} md={SECTIONS.automations.icon.android} />
-          </NativeTabs.Trigger>
-
-          {/* android's tab bar fits at most 5 tabs (it throws on a 6th), so the rest live behind this one */}
-          <NativeTabs.Trigger name="more">
-            <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf="ellipsis" md="more_horiz" />
-          </NativeTabs.Trigger>
-        </NativeTabs>
-        {/* shared by every tab, rendered after the native tabs so it's drawn on top of them (they fill the whole screen) */}
-        <View
-          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-          style={[styles.header, { paddingTop: insets.top + Spacing.two, backgroundColor: colors.background }]}>
-          <ThemedText type="smallBold" style={styles.title} accessibilityRole="header">
-            Home Assistant
-          </ThemedText>
-          <ConnectionStatus />
-        </View>
-      </View>
+      <Tabs>
+        <TabSlot style={styles.slot} />
+        <TabList asChild>
+          <CustomTabList onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+            {SORTED_TABS.map(({ name, href, section }) => (
+              <TabTrigger key={name} name={name} href={href} asChild>
+                <TabButton>{SECTIONS[section].title}</TabButton>
+              </TabTrigger>
+            ))}
+          </CustomTabList>
+        </TabList>
+      </Tabs>
     </HeaderHeightContext>
   );
 }
 
+export function TabButton({ children, isFocused, ref, ...props }: TabTriggerSlotProps) {
+  return (
+    <Pressable
+      {...props}
+      // expo-router types the slot ref as RN's View, which no longer matches Pressable's ref on RN 0.88
+      ref={ref as Ref<ComponentRef<typeof Pressable>>}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: isFocused }}
+      style={({ pressed }) => pressed && styles.pressed}>
+      <ThemedView type={isFocused ? 'backgroundSelected' : 'backgroundElement'} style={styles.tabButtonView}>
+        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+          {children}
+        </ThemedText>
+      </ThemedView>
+    </Pressable>
+  );
+}
+
+export function CustomTabList({ onLayout, ...props }: TabListProps & { onLayout?: (e: LayoutChangeEvent) => void }) {
+  const theme = useTheme();
+  // below the status bar / notch on native - 0 on web
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      {...props}
+      onLayout={onLayout}
+      // solid, so the content scrolling underneath doesn't show around the header or behind the status bar
+      style={[styles.tabListContainer, { paddingTop: insets.top + Spacing.three, backgroundColor: theme.background }]}>
+      <ThemedView type="backgroundElement" style={styles.innerContainer}>
+        <View style={styles.brand}>
+          <ThemedText type="smallBold" accessibilityRole="header">
+            Home Assistant
+          </ThemedText>
+          <ConnectionStatus />
+        </View>
+        {/* wraps onto more lines when the tabs don't fit next to the brand */}
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {props.children}
+        </View>
+      </ThemedView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
+  slot: { height: '100%' },
+  tabListContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    alignItems: 'center',
-    gap: Spacing.half,
+    width: '100%',
+    // the same side margin as the cards below
     paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.three,
+    paddingBottom: Spacing.two,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
-  title: { fontSize: 18, lineHeight: 24 },
+  innerContainer: {
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.four,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    // full width rather than as wide as its content, otherwise nothing ever wraps
+    width: '100%',
+    rowGap: Spacing.three,
+    columnGap: Spacing.four,
+    // as wide as the cards, which Screen insets from MaxContentWidth by its side padding
+    maxWidth: MaxContentWidth - 2 * Spacing.four,
+  },
+  brand: {
+    flexGrow: 1,
+    gap: Spacing.half,
+  },
+  tabs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    flexShrink: 1,
+    gap: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  tabButtonView: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+  },
 });

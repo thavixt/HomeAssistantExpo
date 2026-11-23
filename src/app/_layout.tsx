@@ -12,6 +12,12 @@ import { HA_ACCESS_TOKEN, HA_URL } from '@/lib/ha-config';
 
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = {
+  // Lights is the home tab, wherever its button is in the header - the app starts on it,
+  // and android's back button returns to it from the other tabs
+  anchor: 'index',
+};
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const background = Colors[colorScheme === 'dark' ? 'dark' : 'light'].background;
