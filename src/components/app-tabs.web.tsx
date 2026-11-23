@@ -1,41 +1,69 @@
 import {
-  Tabs,
   TabList,
-  TabTrigger,
-  TabSlot,
-  TabTriggerSlotProps,
   TabListProps,
+  Tabs,
+  TabSlot,
+  TabTrigger,
+  TabTriggerSlotProps,
 } from 'expo-router/ui';
-import { SymbolView } from 'expo-symbols';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { useState, type ComponentRef, type Ref } from 'react';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ConnectionStatus } from '@/components/connection-status';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { HeaderHeightContext } from '@/hooks/use-header-height';
+import { SECTIONS } from '@/lib/sections';
 
-import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
+/* a first guess until onLayout reports the real height */
+const INITIAL_HEADER_HEIGHT = 88;
+
 export default function AppTabs() {
+  const [headerHeight, setHeaderHeight] = useState(INITIAL_HEADER_HEIGHT);
+
   return (
-    <Tabs>
-      <TabSlot style={{ height: '100%' }} />
-      <TabList asChild>
-        <CustomTabList>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
-          </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Explore</TabButton>
-          </TabTrigger>
-        </CustomTabList>
-      </TabList>
-    </Tabs>
+    <HeaderHeightContext value={headerHeight}>
+      <Tabs>
+        <TabSlot style={{ height: '100%' }} />
+        <TabList asChild>
+          <CustomTabList onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+            <TabTrigger name="index" href="/" asChild>
+              <TabButton>Lights</TabButton>
+            </TabTrigger>
+            <TabTrigger name="climate" href="/climate" asChild>
+              <TabButton>Climate</TabButton>
+            </TabTrigger>
+            <TabTrigger name="tv" href="/tv" asChild>
+              <TabButton>TV</TabButton>
+            </TabTrigger>
+            <TabTrigger name="automations" href="/automations" asChild>
+              <TabButton>{SECTIONS.automations.title}</TabButton>
+            </TabTrigger>
+            <TabTrigger name="devices" href="/devices" asChild>
+              <TabButton>{SECTIONS.devices.title}</TabButton>
+            </TabTrigger>
+            <TabTrigger name="system" href="/system" asChild>
+              <TabButton>{SECTIONS.system.title}</TabButton>
+            </TabTrigger>
+            <TabTrigger name="security" href="/security" asChild>
+              <TabButton>{SECTIONS.security.title}</TabButton>
+            </TabTrigger>
+          </CustomTabList>
+        </TabList>
+      </Tabs>
+    </HeaderHeightContext>
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+export function TabButton({ children, isFocused, ref, ...props }: TabTriggerSlotProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable
+      {...props}
+      // expo-router types the slot ref as RN's View, which no longer matches Pressable's ref on RN 0.88
+      ref={ref as Ref<ComponentRef<typeof Pressable>>}
+      style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.tabButtonView}>
@@ -47,29 +75,18 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
   );
 }
 
-export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-
+export function CustomTabList({ onLayout, ...props }: TabListProps & { onLayout?: (e: LayoutChangeEvent) => void }) {
   return (
-    <View {...props} style={styles.tabListContainer}>
+    <View {...props} onLayout={onLayout} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
-        </ThemedText>
-
-        {props.children}
-
-        <ExternalLink href="https://docs.expo.dev" asChild>
-          <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
-            <SymbolView
-              tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
-              size={12}
-            />
-          </Pressable>
-        </ExternalLink>
+        <View style={styles.brand}>
+          <ThemedText type="smallBold" accessibilityRole="header">
+            Home Assistant
+          </ThemedText>
+          <ConnectionStatus />
+        </View>
+        {/* wraps onto more lines when the tabs don't fit next to the brand */}
+        <View style={styles.tabs}>{props.children}</View>
       </ThemedView>
     </View>
   );
@@ -79,37 +96,41 @@ const styles = StyleSheet.create({
   tabListContainer: {
     position: 'absolute',
     width: '100%',
-    padding: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
   },
   innerContainer: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    borderRadius: Spacing.four,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    flexGrow: 1,
-    gap: Spacing.two,
+    // full width rather than as wide as its content, otherwise nothing ever wraps
+    width: '100%',
+    rowGap: Spacing.three,
+    columnGap: Spacing.four,
     maxWidth: MaxContentWidth,
   },
-  brandText: {
-    marginRight: 'auto',
+  brand: {
+    flexGrow: 1,
+    gap: Spacing.half,
+  },
+  tabs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    flexShrink: 1,
+    gap: Spacing.two,
   },
   pressed: {
     opacity: 0.7,
   },
   tabButtonView: {
-    paddingVertical: Spacing.one,
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
-  },
-  externalPressable: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.one,
-    marginLeft: Spacing.three,
   },
 });
