@@ -60,7 +60,6 @@ function WifiRow({ now }: { now: number }) {
     );
   }
 
-  console.log(wifi)
   const atHome = wifi.state === HOME_WIFI_NETWORK;
   return (
     <InfoRow

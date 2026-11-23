@@ -4,8 +4,8 @@ import * as SystemUI from 'expo-system-ui';
 import { HAProvider } from 'hass-react';
 import { useEffect } from 'react';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
+import { SplashOverlay } from '@/components/splash-overlay';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { HA_ACCESS_TOKEN, HA_URL } from '@/lib/ha-config';
@@ -32,7 +32,7 @@ export default function TabLayout() {
     // token mode skips hass-react's browser-only oauth code (window.location, localStorage)
     <HAProvider url={HA_URL} token={HA_ACCESS_TOKEN} authMode="token">
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AnimatedSplashOverlay />
+        <SplashOverlay />
         <AppTabs />
       </ThemeProvider>
     </HAProvider>

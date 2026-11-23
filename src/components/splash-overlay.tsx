@@ -7,7 +7,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 const DURATION = 600;
 
-export function AnimatedSplashOverlay() {
+/* must match the expo-splash-screen plugin in app.json (backgroundColor, imageWidth), so the
+   native splash screen hands over to this overlay without a visible jump - the pwa's manifest colors */
+const SPLASH_BACKGROUND = '#030712';
+const SPLASH_IMAGE_SIZE = 120;
+
+export function SplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
 
@@ -32,7 +37,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = <Image style={styles.image} source={require('@/assets/images/splash-icon.png')} />;
 
   return animate ? (
     <Animated.View
@@ -60,12 +65,12 @@ export function AnimatedSplashOverlay() {
 
 const styles = StyleSheet.create({
   image: {
-    width: 76,
-    height: 71,
+    width: SPLASH_IMAGE_SIZE,
+    height: SPLASH_IMAGE_SIZE,
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: SPLASH_BACKGROUND,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
