@@ -33,6 +33,7 @@ const TABS: { name: string; href: Href; section: SectionId }[] = [
   { name: 'system', href: '/system', section: 'system' },
   { name: 'security', href: '/security', section: 'security' },
   { name: 'assist', href: '/assist', section: 'assist' },
+  { name: 'activity', href: '/activity', section: 'activity' },
 ];
 
 /* alphabetically by title - the order only affects the buttons, Lights stays the home tab

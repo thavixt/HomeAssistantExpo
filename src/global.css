@@ -21,3 +21,8 @@ body {
     background-color: #000000;
   }
 }
+
+/* desktop browsers default to a white scrollbar track, which stands out on the dark cards */
+* {
+  scrollbar-color: #60646c transparent;
+}

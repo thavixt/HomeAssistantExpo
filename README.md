@@ -14,6 +14,7 @@ It's built for one specific home - the entity IDs, scripts and devices are mine 
 | **Climate** | Gree AC: target temperature, mode and fan speed, inside and outside temperature |
 | **TV** | Vidaa TV: power, app picker, volume (capped at 20%), shortcut scripts, and a remote with a D-pad and media keys |
 | **Automations** | Turns automations on and off, shows when each last ran |
+| **Activity** | What the lights, AC, TV, scenes and automations did in the last 10 days, and what caused it |
 | **Devices** | Battery and charging state of the phones, tablet and laptop, when each was last seen, and a "find my phone" button |
 | **System** | The Raspberry Pi's CPU, temperature, memory and uptime, the phone's Wi-Fi, backups, pending updates (with Install) and restarts |
 | **Security** | Camera snapshots, and a live view that refreshes every second |
@@ -64,7 +65,7 @@ To point the app at your own home, change the entity IDs in [`src/constants/enti
 src/
   app/                 routes (Expo Router) - one file per tab, _layout.tsx sets up the HA connection
   components/
-    widgets/           a card per tab (lights, climate, tv, automations, devices, system, security, assist)
+    widgets/           a card per tab (lights, climate, tv, automations, devices, system, security, assist, activity)
     ha/                entity buttons - light, switch, scene, script, automation
     app-tabs.tsx       the header with the connection status and the tabs
   hooks/               service calls with retry (use-action), HA config / discovery lookups, clocks

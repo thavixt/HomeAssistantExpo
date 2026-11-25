@@ -7,6 +7,10 @@ interface Section {
 }
 
 export const SECTIONS = {
+  activity: {
+    title: 'Activity',
+    icon: { ios: 'clock.arrow.circlepath', android: 'history', web: 'history' },
+  },
   assist: {
     title: 'Assist',
     icon: { ios: 'text.bubble', android: 'chat', web: 'chat' },

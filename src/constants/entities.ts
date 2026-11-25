@@ -32,6 +32,7 @@ export const ENTITIES = {
   phone: {
     /* the name of the Wi-Fi network the phone is on */
     wifi: 'sensor.sm_a566b_wi_fi_connection',
+    nextAlarm: 'sensor.sm_a566b_next_alarm',
     batteryLevel: 'sensor.sm_a566b_battery_level',
     batteryState: 'sensor.sm_a566b_battery_state',
     tracker: 'device_tracker.sm_a566b',
