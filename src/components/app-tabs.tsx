@@ -12,6 +12,7 @@ import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ConnectionStatus } from '@/components/connection-status';
+import { StatusChip } from '@/components/status-chip';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -94,12 +95,15 @@ export function CustomTabList({ onLayout, ...props }: TabListProps & { onLayout?
       style={[styles.tabListContainer, { paddingTop: insets.top + Spacing.three, backgroundColor: theme.background }]}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
         <View style={styles.brand}>
-          <ThemedText type="smallBold" accessibilityRole="header">
-            Home Assistant
-          </ThemedText>
-          <ConnectionStatus />
+          <View style={styles.title}>
+            <ThemedText type="smallBold" accessibilityRole="header" numberOfLines={1}>
+              Home Assistant
+            </ThemedText>
+            <ConnectionStatus />
+          </View>
+          <StatusChip />
         </View>
-        {/* wraps onto more lines when the tabs don't fit next to the brand */}
+        {/* wraps onto more lines when the tabs don't fit on one */}
         <View style={styles.tabs} accessibilityRole="tablist">
           {props.children}
         </View>
@@ -135,7 +139,16 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth - 2 * Spacing.four,
   },
   brand: {
-    flexGrow: 1,
+    // a line of its own, above the tabs
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  title: {
+    // takes what the status chip leaves, so a long connection error is cut off instead of pushing the chip out
+    flex: 1,
+    minWidth: 0,
     gap: Spacing.half,
   },
   tabs: {

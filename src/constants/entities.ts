@@ -1,5 +1,6 @@
 /* every Home Assistant entity the app uses - when one is renamed in HA, update it here (mirrors the pwa) */
 export const ENTITIES = {
+  person: 'person.peter_komlosi',
   lights: {
     entrance: 'light.entrance_plug',
     livingRoom: 'light.living_room_light',
@@ -22,6 +23,10 @@ export const ENTITIES = {
   tv: {
     mediaPlayer: 'media_player.living_room_vidaa_smart_tv',
     remote: 'remote.living_room_vidaa_smart_tv_remote',
+  },
+  helpers: {
+    /* time-only input_datetime, the "Morning" automation's trigger */
+    morningWakeTime: 'input_datetime.morning_wake_time',
   },
   /* mobile app sensors */
   phone: {

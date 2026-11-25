@@ -24,7 +24,7 @@ export function ConnectionStatus() {
   return (
     <View style={styles.row} accessibilityLabel={`Home Assistant ${text}`}>
       <View style={[styles.dot, { backgroundColor: DOT_COLORS[connectionState] }]} />
-      <ThemedText type="code" themeColor="textSecondary" numberOfLines={1}>
+      <ThemedText type="code" themeColor="textSecondary" numberOfLines={1} style={styles.text}>
         {text}
       </ThemedText>
     </View>
@@ -33,5 +33,6 @@ export function ConnectionStatus() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  text: { flexShrink: 1 },
   dot: { width: 8, height: 8, borderRadius: 4 },
 });

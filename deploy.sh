@@ -40,7 +40,6 @@ app.expo.version = process.argv[1];
 fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
 " "$next"
 echo "Version: $current -> $next (package.json, package-lock.json, app.json)"
-exit
 echo
 
 echo "Logging in to Expo Application Services ..."

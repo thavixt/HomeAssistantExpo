@@ -25,3 +25,25 @@ export function relativeFuture(timestamp: Date | string, now = Date.now()) {
   const ms = new Date(timestamp).getTime() - now;
   return ms < 60_000 ? 'now' : `in ${formatDuration(ms)}`;
 }
+
+/** today at a "HH:MM" or "HH:MM:SS" time, in local time */
+export function timeToday(time: string, now = Date.now()) {
+  const [hours, minutes, seconds = 0] = time.split(':').map(Number);
+  const date = new Date(now);
+  date.setHours(hours, minutes, seconds, 0);
+  return date;
+}
+
+/** "06:30" - always 24-hour, whatever the device's locale */
+export function formatTime(date: Date) {
+  return [date.getHours(), date.getMinutes()].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
+/** the next weekday occurrence of a "HH:MM:SS" time - today if it's still ahead, otherwise the next weekday */
+export function nextWeekdayOccurrence(time: string, now = Date.now()) {
+  const next = timeToday(time, now);
+  if (next.getTime() <= now) next.setDate(next.getDate() + 1);
+  // setDate keeps the wall-clock time across dst changes
+  while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate() + 1);
+  return next;
+}
