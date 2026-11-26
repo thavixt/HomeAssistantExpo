@@ -27,6 +27,11 @@ export const SECTIONS = {
     title: 'Devices',
     icon: { ios: 'cpu', android: 'devices', web: 'devices' },
   },
+  /* the tab with the Assist, Devices, System and Security cards - those keep their own sections for the card headers */
+  home: {
+    title: 'Home',
+    icon: { ios: 'house', android: 'home', web: 'home' },
+  },
   lights: {
     title: 'Lights',
     icon: { ios: 'lightbulb', android: 'lightbulb', web: 'lightbulb' },

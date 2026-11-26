@@ -29,10 +29,8 @@ const TABS: { name: string; href: Href; section: SectionId }[] = [
   { name: 'climate', href: '/climate', section: 'climate' },
   { name: 'tv', href: '/tv', section: 'tv' },
   { name: 'automations', href: '/automations', section: 'automations' },
-  { name: 'devices', href: '/devices', section: 'devices' },
-  { name: 'system', href: '/system', section: 'system' },
-  { name: 'security', href: '/security', section: 'security' },
-  { name: 'assist', href: '/assist', section: 'assist' },
+  /* Assist, Devices, System and Security */
+  { name: 'home', href: '/home', section: 'home' },
   { name: 'activity', href: '/activity', section: 'activity' },
   { name: 'pointer', href: '/pointer', section: 'pointer' },
 ];
