@@ -1,4 +1,4 @@
-import { Accelerometer, Gyroscope, Magnetometer } from 'expo-sensors';
+import { Accelerometer, Magnetometer } from 'expo-sensors';
 import { useEffect, useRef, useState } from 'react';
 
 import { averageAim, computeAim, headingBetween, lowPass, type Aim, type Vec3 } from '@/lib/pointing';
@@ -7,8 +7,6 @@ import { averageAim, computeAim, headingBetween, lowPass, type Aim, type Vec3 } 
 
 /** ms between accelerometer/magnetometer readings (for the aim) */
 const AIM_INTERVAL = 50;
-/** ms between gyroscope readings (for the twist) - fast, a twist is over in ~300ms */
-const GYRO_INTERVAL = 16;
 /** smoothing of the aim - lower is steadier but laggier */
 const SMOOTHING = 0.2;
 /**
@@ -19,25 +17,12 @@ export const LOCK_ANGLE = 20;
 const UNLOCK_ANGLE = 30;
 /** two calibrations closer than this can't be told apart reliably */
 export const MIN_TARGET_SEPARATION = 2 * UNLOCK_ANGLE;
-/** rad/s around the phone's long axis that starts a twist (~115°/s) */
-const TWIST_START_RATE = 2;
-/** a twist must turn the wrist this far, in radians (~40°) */
-const TWIST_ANGLE = 0.7;
-/** ...within this many ms */
-const TWIST_MAX_DURATION = 600;
-/** ms to ignore the gyroscope after a twist - covers turning the wrist back */
-const TWIST_COOLDOWN = 1200;
-/**
- * which gyroscope sign means "turned right". with the right-hand rule around the y axis (towards the top edge),
- * turning the wrist right (clockwise, looking along the phone) is positive - flip it if it's backwards on a device
- */
-const TWIST_SIGN = 1;
+/** ms to keep holding the trigger while locked on before it fires */
+export const HOLD_DURATION = 1000;
 /** ms of aim readings to average when calibrating */
 export const CALIBRATION_DURATION = 1500;
 /** ms between aim updates in react state - the sensors run faster, this is only for display */
-const UI_INTERVAL = 100;
-
-export type TwistDirection = 'left' | 'right';
+const UI_INTERVAL = 250;
 
 export interface PointerTarget {
   id: string;
@@ -52,11 +37,11 @@ interface PointerOptions {
   targets: PointerTarget[];
   /**
    * true while the user holds the trigger: the lock freezes on its current target (or the first one aimed at, if
-   * none yet), and twists only count while held
+   * none yet), and after HOLD_DURATION of holding while locked it fires
    */
   held: boolean;
-  /** a twist while held and locked on to `targetId` */
-  onTwist: (direction: TwistDirection, targetId: string) => void;
+  /** held for HOLD_DURATION while locked on to `targetId` - fires once per press */
+  onHold: (targetId: string) => void;
   /** called when it locks on to a target (its id) or lets go (null) - e.g. for haptics */
   onLockChange?: (targetId: string | null) => void;
 }
@@ -79,18 +64,20 @@ function pickTarget(aim: Aim, targets: PointerTarget[], current: string | null):
 }
 
 /**
- * "point the phone at something, then twist the wrist": tracks where the phone's top edge points (accelerometer +
- * magnetometer), which target that's at, and detects quick wrist twists (gyroscope) while it's at one
+ * "point the phone at something, then hold the button": tracks where the phone's top edge points (accelerometer +
+ * magnetometer), which target that's at, and fires once the trigger has been held for HOLD_DURATION while locked on
  */
-export function usePointer({ enabled, targets, held, onTwist, onLockChange }: PointerOptions) {
+export function usePointer({ enabled, targets, held, onHold, onLockChange }: PointerOptions) {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [aim, setAim] = useState<Aim | null>(null);
   const [lockedId, setLockedId] = useState<string | null>(null);
+  /** already fired during this press */
+  const [fired, setFired] = useState(false);
 
   // the sensor listeners read these, so they don't have to resubscribe on every render
-  const latest = useRef({ targets, held, onTwist, onLockChange });
+  const latest = useRef({ targets, held, onHold, onLockChange });
   useEffect(() => {
-    latest.current = { targets, held, onTwist, onLockChange };
+    latest.current = { targets, held, onHold, onLockChange };
   });
 
   const lockedRef = useRef<string | null>(null);
@@ -98,7 +85,7 @@ export function usePointer({ enabled, targets, held, onTwist, onLockChange }: Po
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([Accelerometer.isAvailableAsync(), Magnetometer.isAvailableAsync(), Gyroscope.isAvailableAsync()])
+    void Promise.all([Accelerometer.isAvailableAsync(), Magnetometer.isAvailableAsync()])
       .then((all) => !cancelled && setAvailable(all.every(Boolean)))
       .catch(() => !cancelled && setAvailable(false));
     return () => {
@@ -119,7 +106,7 @@ export function usePointer({ enabled, targets, held, onTwist, onLockChange }: Po
       if (!next) return;
       samplesRef.current?.push(next);
 
-      // held and locked: frozen, so aiming away mid-twist can't change or drop the target
+      // held and locked: frozen, so drifting off mid-hold can't change or drop the target
       const frozen = latest.current.held && lockedRef.current !== null;
       const nowLocked = frozen ? lockedRef.current : pickTarget(next, latest.current.targets, lockedRef.current);
       if (nowLocked !== lockedRef.current) {
@@ -137,7 +124,6 @@ export function usePointer({ enabled, targets, held, onTwist, onLockChange }: Po
 
     Accelerometer.setUpdateInterval(AIM_INTERVAL);
     Magnetometer.setUpdateInterval(AIM_INTERVAL);
-    Gyroscope.setUpdateInterval(GYRO_INTERVAL);
 
     const accelSub = Accelerometer.addListener((data) => {
       gravity = lowPass(gravity, data, SMOOTHING);
@@ -147,48 +133,26 @@ export function usePointer({ enabled, targets, held, onTwist, onLockChange }: Po
       magnetic = lowPass(magnetic, data, SMOOTHING);
     });
 
-    // twist detection: integrate the rotation around the long axis while it's fast
-    let twist: { start: number; angle: number; lockedAtStart: string | null } | null = null;
-    let lastGyro = 0;
-    let cooldownUntil = 0;
-    const gyroSub = Gyroscope.addListener(({ x, y, z }) => {
-      const now = Date.now();
-      const dt = lastGyro ? Math.min((now - lastGyro) / 1000, 0.1) : 0;
-      lastGyro = now;
-      if (now < cooldownUntil) return;
-      // twists only count while the trigger is held
-      if (!latest.current.held) {
-        twist = null;
-        return;
-      }
-
-      const rate = y * TWIST_SIGN;
-      if (!twist) {
-        // a twist is mostly around y - not a swing of the whole arm
-        const dominant = Math.abs(y) > 1.5 * Math.max(Math.abs(x), Math.abs(z));
-        // remember what it was locked on to *before* the twist, the twist itself shakes the aim
-        if (Math.abs(rate) > TWIST_START_RATE && dominant) twist = { start: now, angle: 0, lockedAtStart: lockedRef.current };
-        return;
-      }
-
-      twist.angle += rate * dt;
-      if (Math.abs(twist.angle) > TWIST_ANGLE) {
-        if (twist.lockedAtStart) latest.current.onTwist(twist.angle > 0 ? 'right' : 'left', twist.lockedAtStart);
-        twist = null;
-        cooldownUntil = now + TWIST_COOLDOWN;
-      } else if (now - twist.start > TWIST_MAX_DURATION || Math.abs(rate) < 0.5) {
-        twist = null;
-      }
-    });
-
     return () => {
       accelSub.remove();
       magSub.remove();
-      gyroSub.remove();
       lockedRef.current = null;
       setLockedId(null);
     };
   }, [enabled, available]);
+
+  // the hold timer: starts once held and locked (the lock is frozen while held, so it only changes from none to one)
+  // releasing re-arms it (adjusting state while rendering, rather than in an effect)
+  if (!held && fired) setFired(false);
+  const charging = held && lockedId !== null && !fired;
+  useEffect(() => {
+    if (!charging || !lockedId) return;
+    const timer = setTimeout(() => {
+      setFired(true);
+      latest.current.onHold(lockedId);
+    }, HOLD_DURATION);
+    return () => clearTimeout(timer);
+  }, [charging, lockedId]);
 
   /** averages the aim over CALIBRATION_DURATION - hold the phone still, pointed at the target */
   const sampleAim = () =>
@@ -207,6 +171,8 @@ export function usePointer({ enabled, targets, held, onTwist, onLockChange }: Po
     aim,
     /** the target it's pointing at, if any */
     lockedId,
+    /** held and locked on, counting down HOLD_DURATION - e.g. to animate progress */
+    charging,
     sampleAim,
   };
 }

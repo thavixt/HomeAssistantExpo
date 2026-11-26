@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from 'expo-router';
 import { useEntityGroup, useServiceCall } from 'hass-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Card } from '@/components/card';
 import { Collapsible } from '@/components/collapsible';
@@ -14,6 +15,7 @@ import { Spacing } from '@/constants/theme';
 import { useAction } from '@/hooks/use-action';
 import {
   CALIBRATION_DURATION,
+  HOLD_DURATION,
   LOCK_ANGLE,
   MIN_TARGET_SEPARATION,
   usePointer,
@@ -63,7 +65,7 @@ type Calibrations = Record<string, Aim | null>;
 const loadAll = (): Calibrations => Object.fromEntries(TARGETS.map((t) => [t.id, loadCalibration(t.id)]));
 
 /**
- * point the phone (top edge first) at one of the TARGETS, then twist the wrist to toggle it.
+ * point the phone (top edge first) at one of the TARGETS, then hold the circle for HOLD_DURATION to toggle it.
  * calibrate each once from where you usually stand
  */
 export function Pointer() {
@@ -72,9 +74,9 @@ export function Pointer() {
   const states = useEntityGroup(ALL_ENTITIES);
   const [calibrations, setCalibrations] = useState(loadAll);
   const [calibratingId, setCalibratingId] = useState<string | null>(null);
-  const [lastTwist, setLastTwist] = useState<string | null>(null);
-  const [open, setOpen] = useState(true);
-  // the indicator is the trigger: hold it to freeze the lock, twist while holding to toggle
+  const [lastToggle, setLastToggle] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  // the indicator is the trigger: hold it to freeze the lock, keep holding to toggle
   const [held, setHeld] = useState(false);
 
   // the sensors only run while this tab is on screen
@@ -99,7 +101,7 @@ export function Pointer() {
     (target: Target, on: boolean) =>
       callService('homeassistant', on ? 'turn_on' : 'turn_off', { entity_id: target.entities }),
     (target, on) => `turn ${on ? 'on' : 'off'} the ${target.name.toLowerCase()}`,
-    // a twist at a different target shouldn't wait for the last call
+    // a hold at a different target shouldn't wait for the last call
     { exclusive: false },
   );
 
@@ -108,22 +110,32 @@ export function Pointer() {
     ? []
     : TARGETS.flatMap((t) => (calibrations[t.id] ? [{ id: t.id, aim: calibrations[t.id]! }] : []));
 
-  const { available, aim, lockedId, sampleAim } = usePointer({
+  const { available, aim, lockedId, charging, sampleAim } = usePointer({
     enabled: focused,
     targets: pointerTargets,
     held,
-    onTwist: (_direction, targetId) => {
+    onHold: (targetId) => {
       const target = TARGETS.find((t) => t.id === targetId);
       if (!target) return;
       const on = !anyOn(target);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setLastTwist(`${target.name} → ${on ? 'on' : 'off'}`);
+      setLastToggle(`${target.name} → ${on ? 'on' : 'off'}`);
       void toggle.run(target, on);
     },
     onLockChange: (id) => {
       if (id) void Haptics.selectionAsync();
     },
   });
+
+  // fills the circle over HOLD_DURATION while a hold counts down, snaps back when released or fired
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = charging ? withTiming(1, { duration: HOLD_DURATION, easing: Easing.linear }) : 0;
+  }, [charging, progress]);
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: progress.value === 0 ? 0 : 0.3,
+    transform: [{ scale: progress.value }],
+  }));
 
   const calibrate = async (target: Target) => {
     setCalibratingId(target.id);
@@ -143,7 +155,7 @@ export function Pointer() {
 
   if (available === null) {
     return (
-      <Card icon={ICON} title="Point & twist">
+      <Card icon={ICON} title="Point & hold">
         <ActivityIndicator style={styles.loading} />
       </Card>
     );
@@ -151,9 +163,9 @@ export function Pointer() {
 
   if (!available) {
     return (
-      <Card icon={ICON} title="Point & twist">
+      <Card icon={ICON} title="Point & hold">
         <ThemedText type="small" themeColor="textSecondary">
-          This device has no gyroscope, accelerometer, or compass, so pointing does not work here. Try it on your phone.
+          This device has no accelerometer or compass, so pointing does not work here. Try it on your phone.
         </ThemedText>
       </Card>
     );
@@ -167,13 +179,14 @@ export function Pointer() {
   let status: string;
   if (calibrating) status = `Hold still, pointing at the ${calibrating.name.toLowerCase()}…`;
   else if (!anyCalibrated) status = 'Nothing calibrated yet';
-  else if (held && locked) status = `Twist to toggle the ${locked.name.toLowerCase()}`;
+  else if (charging && locked) status = `Keep holding to toggle the ${locked.name.toLowerCase()}…`;
+  else if (held && locked) status = 'Release and hold again to toggle again';
   else if (held) status = 'Aim at a device…';
-  else if (locked) status = `${locked.name} - hold the circle and twist`;
+  else if (locked) status = `${locked.name} - hold the circle to toggle`;
   else status = 'Point at a device';
 
   return (
-    <Card icon={ICON} title="Point & twist">
+    <Card icon={ICON} title="Point & hold">
       <View style={styles.container}>
         <View style={styles.center}>
           <Pressable
@@ -186,7 +199,7 @@ export function Pointer() {
             accessibilityRole="button"
             accessibilityState={{ selected: held }}
             accessibilityLabel={status}
-            accessibilityHint="Hold, then turn your wrist to toggle the device"
+            accessibilityHint={`Hold for ${HOLD_DURATION / 1000} seconds to toggle the device`}
             style={[
               styles.indicator,
               {
@@ -195,6 +208,7 @@ export function Pointer() {
               },
               held && styles.indicatorHeld,
             ]}>
+            <Animated.View pointerEvents="none" style={[styles.fill, { backgroundColor: theme.success }, fillStyle]} />
             {locked ? (
               <>
                 <ThemedText type="smallBold" style={styles.centerText}>
@@ -213,14 +227,14 @@ export function Pointer() {
           <ThemedText type="smallBold" themeColor={locked ? 'success' : 'text'}>
             {status}
           </ThemedText>
-          {lastTwist && (
+          {lastToggle && (
             <ThemedText type="small" themeColor="textSecondary">
-              {lastTwist}
+              {lastToggle}
             </ThemedText>
           )}
         </View>
 
-        <Collapsible isOpen={open} onOpenChange={setOpen} label="Configuration">
+        <Collapsible isOpen={configOpen} onOpenChange={setConfigOpen} label="Configuration">
           <View style={styles.list}>
             {TARGETS.map((target) => {
               const calibration = calibrations[target.id];
@@ -274,7 +288,7 @@ export function Pointer() {
             })}
           </View>
           <ThemedText type="small" themeColor="textSecondary">
-            {`Calibrate each device from where you usually stand: point the top of the phone at it, tap Calibrate, and hold still for ${CALIBRATION_DURATION / 1000}s. Then point at one (within ${LOCK_ANGLE}°) until it buzzes, hold the circle, and quickly turn your wrist to toggle it. While you hold, it stays locked on to that device.`}
+            {`Calibrate each device from where you usually stand: point the top of the phone at it, tap Calibrate, and hold still for ${CALIBRATION_DURATION / 1000}s. Then point at one (within ${LOCK_ANGLE}°) until it buzzes, and hold the circle for ${HOLD_DURATION / 1000}s to toggle it. While you hold, it stays locked on to that device.`}
           </ThemedText>
         </Collapsible>
       </View>
@@ -296,6 +310,8 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     padding: Spacing.three,
   },
+  /* the hold progress, grows from the center to fill the circle */
+  fill: { ...StyleSheet.absoluteFill, borderRadius: INDICATOR_SIZE / 2 },
   /* pressed in, like a button */
   indicatorHeld: { transform: [{ scale: 0.95 }] },
   centerText: { textAlign: 'center' },
