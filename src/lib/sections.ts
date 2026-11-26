@@ -31,6 +31,10 @@ export const SECTIONS = {
     title: 'Lights',
     icon: { ios: 'lightbulb', android: 'lightbulb', web: 'lightbulb' },
   },
+  pointer: {
+    title: 'Pointer',
+    icon: { ios: 'scope', android: 'my_location', web: 'my_location' },
+  },
   security: {
     title: 'Security',
     icon: { ios: 'lock.shield', android: 'security', web: 'security' },
